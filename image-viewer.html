@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Viewer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f0f0;
+            min-height: 100vh;
+        }
+
+        .gallery {
+            column-count: 5;
+            column-gap: 10px;
+            padding: 10px;
+        }
+
+        @media (max-width: 1200px) {
+            .gallery {
+                column-count: 4;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .gallery {
+                column-count: 3;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .gallery {
+                column-count: 2;
+            }
+        }
+
+        .thumbnail-wrapper {
+            background: #fff;
+            border: 1px solid #ddd;
+            margin-bottom: 10px;
+            break-inside: avoid;
+        }
+
+        .thumbnail {
+            width: 100%;
+            height: auto;
+            display: block;
+            cursor: pointer;
+        }
+
+        .error {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 150px;
+            background: #fff;
+            border: 1px solid #ddd;
+            color: #999;
+            font-size: 12px;
+        }
+
+        .input-modal {
+            display: flex;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .input-modal.hidden {
+            display: none;
+        }
+
+        .input-box {
+            background: white;
+            padding: 20px;
+            width: 500px;
+            max-width: 90%;
+            border: 1px solid #ccc;
+        }
+
+        .input-box h2 {
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+            font-family: monospace;
+            resize: vertical;
+            margin-bottom: 15px;
+        }
+
+        button {
+            background: #333;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        button:hover {
+            background: #555;
+        }
+
+        .image-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .image-modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+        }
+
+        .close {
+            position: absolute;
+            top: 20px;
+            right: 40px;
+            color: white;
+            font-size: 40px;
+            cursor: pointer;
+        }
+
+        .fab {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background: #333;
+            color: white;
+            border: none;
+            font-size: 30px;
+            cursor: pointer;
+            z-index: 500;
+        }
+
+        .fab:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body>
+    <div id="gallery" class="gallery"></div>
+
+    <div id="inputModal" class="input-modal">
+        <div class="input-box">
+            <h2>Paste Image URLs</h2>
+            <textarea
+                id="urlInput"
+                placeholder="https://example.com/image1.jpg, https://example.com/image2.png"
+            ></textarea>
+            <button onclick="loadImages()">Proceed</button>
+        </div>
+    </div>
+
+    <button class="fab" onclick="showInputModal()" style="display: none;" id="fab">+</button>
+
+    <div id="imageModal" class="image-modal" onclick="closeImageModal()">
+        <span class="close">&times;</span>
+        <img id="modalImg" class="modal-content">
+    </div>
+
+    <script>
+        function loadImages() {
+            const input = document.getElementById('urlInput').value;
+            const gallery = document.getElementById('gallery');
+
+            gallery.innerHTML = '';
+
+            if (!input.trim()) {
+                alert('Please paste some image URLs first!');
+                return;
+            }
+
+            const urls = input.split(',')
+                .map(url => url.trim())
+                .filter(url => url.length > 0);
+
+            if (urls.length === 0) {
+                alert('No valid URLs found!');
+                return;
+            }
+
+            hideInputModal();
+
+            urls.forEach((url, index) => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'thumbnail-wrapper';
+
+                const img = document.createElement('img');
+                img.className = 'thumbnail';
+                img.alt = `Image ${index + 1}`;
+
+                img.onerror = function() {
+                    wrapper.innerHTML = '<div class="error">Failed to load</div>';
+                };
+
+                img.onclick = function() {
+                    openImageModal(url);
+                };
+
+                img.src = url;
+                wrapper.appendChild(img);
+                gallery.appendChild(wrapper);
+            });
+        }
+
+        function showInputModal() {
+            document.getElementById('inputModal').classList.remove('hidden');
+        }
+
+        function hideInputModal() {
+            document.getElementById('inputModal').classList.add('hidden');
+            document.getElementById('fab').style.display = 'block';
+        }
+
+        function openImageModal(imageSrc) {
+            const modal = document.getElementById('imageModal');
+            const modalImg = document.getElementById('modalImg');
+            modal.classList.add('active');
+            modalImg.src = imageSrc;
+        }
+
+        function closeImageModal() {
+            document.getElementById('imageModal').classList.remove('active');
+        }
+    </script>
+</body>
+</html>
